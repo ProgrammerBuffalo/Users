@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+    <meta charset="utf-8">
+    <style>
+      td {
+        padding: 1px;
+      }
+      button {
+        height: 25px;
+        width: 75px;
+      }
+    </style>
+  </head>
+  <body ng-app="angMod">
+
+   <table id="tbl" ng-controller="angController" border="1">
+    <tr ng-repeat="user in users">
+      <td style="width:25px;align-content: center;">{{user._id}}</td>
+      <td><input value="{{user.Name}}" /></td>
+      <td><input value="{{user.Surname}}" /></td>
+      <td><input value="{{user.Nickname}}" /></td>
+      <td><button ng-click ="put(user._id)" class="btnChange">Change</button></td>
+      <td><button ng-click ="remove(user._id)" class="btnDelete">Remove</button></td>
+    </tr>
+    <tr>
+      <td></td>
+      <td><input id='inpt1' type="text" name="userName"/></td>
+      <td><input id='inpt2' type="text" name="userSurname"/></td>
+      <td><input id='inpt3' type="text" name="userNickname"/></td>
+      <td><button id="btnAdd">Add</button></td>
+  </table>
+
+    <script>
+      var angMod = angular.module('angMod', []);
+      var idLast = 0;
+      angMod.controller('angController', function($scope, $http) {
+        $http.get('/users').then(function(response){
+          var users = response.data;
+          $scope.users = users;
+          $scope.put = function(id) { put(id); }
+          $scope.remove = function(id) { remove(id); }
+        });
+    });
+
+    var btnAdd = document.getElementById('btnAdd');
+    btnAdd.addEventListener("click", post);
+
+    function createFormBody(it1, it2, it3){
+      console.log(it1);
+      console.log(it2);
+      console.log(it3);
+      var user = { 'name': it1,
+                   'surname': it2,
+                   'nickname': it3 };
+
+      var formBody = [];
+        for(var item in user){
+          var encodedKey = encodeURIComponent(item);
+          var encodedValue = encodeURIComponent(user[item]);
+          formBody.push(encodedKey + "=" + encodedValue);
+        }
+      return formBody;
+    }
+
+    async function remove(id) {
+      console.log(id);
+      var formBody = [];
+      formBody.push(encodeURIComponent('id') + "=" + encodeURIComponent(id));
+      var response = await fetch("/remove", {
+        method: "DELETE", headers: {
+          "Accept": "application/json", "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+        },
+        body: formBody
+      });
+
+      if(response.ok == true)
+       location.reload();
+    }
+
+    async function put(id) {
+      let children = event.target.parentNode.parentNode.childNodes;
+
+      console.log("put");
+      console.log(id);
+      var formBody = createFormBody(children[3].firstChild.value, children[5].firstChild.value, children[7].firstChild.value, id);
+      formBody.push(encodeURIComponent('id') + "=" + encodeURIComponent(id));
+      formBody = formBody.join("&");
+
+      var response = await fetch("/change", {
+              method: "PUT", headers:
+              {
+                "Accept": "application/json", "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+              },
+              body: formBody
+            });
+
+            if(response.ok === true){
+              location.reload();
+            }
+    }
+
+    async function post() {
+      const inpt1 = document.getElementById('inpt1');
+      const inpt2 = document.getElementById('inpt2');
+      const inpt3 = document.getElementById('inpt3');
+
+      var formBody = createFormBody(inpt1.value, inpt2.value, inpt3.value);
+      formBody = formBody.join("&");
+
+      var response = await fetch("/add", {
+							method: "POST", headers:
+              {
+                "Accept": "application/json", "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+              },
+							body: formBody
+						});
+
+      if(response.ok === true){
+        location.reload();
+      }
+    }
+
+    </script>
+
+  </body>
+</html>
